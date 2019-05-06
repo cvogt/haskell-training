@@ -1,0 +1,15 @@
+_stylish-config: !include ".stylish-haskell.yaml"
+
+default-extensions: *extensions
+
+dependencies:
+  - atomic-write
+  - base
+  - aeson
+  - bytestring
+  - directory
+  - http-conduit
+  - file-embed
+  - process
+  - protolude
+  - text

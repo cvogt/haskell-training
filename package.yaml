@@ -1,0 +1,37 @@
+name: haskell-training-lib
+
+defaults:
+  local: package-defaults.yaml
+
+extra-source-files:
+  - .stylish-haskell.yaml
+  - package-defaults.yaml
+
+library:
+  source-dirs:
+    - lib
+
+ghc-options:
+  # - -Wincomplete-record-updates
+  # - -Wincomplete-uni-patterns
+  # - -Wno-unused-do-bind
+  # - -Wno-unused-imports
+  # - -Wno-missing-signatures
+  # - -Wredundant-constraints
+  - -Wall
+  - -Werror
+
+executables:
+  cci:
+    main: Main.hs
+    source-dirs: cci
+    dependencies:
+      - haskell-training-lib
+
+tests:
+  tasty:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - haskell-training-lib
