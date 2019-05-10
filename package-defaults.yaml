@@ -13,3 +13,4 @@ dependencies:
   - process
   - protolude
   - text
+  - pretty-simple
