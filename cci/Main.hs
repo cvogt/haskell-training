@@ -3,84 +3,32 @@ module Main where
 --import qualified Circleci
 
 import           Protolude
+import qualified Data.ByteString.Lazy as BSL
+import           System.Environment (lookupEnv)
+import           Network.HTTP.Simple (parseRequest, httpLbs, Request, Response, getResponseBody)
 
-int1OrError :: Either Text Int
-int1OrError = Right 5
-
-int2OrError :: Either Text Int
-int2OrError = Right 6
-
-int1or2 :: Either Text Int
-int1or2 = do
-  i1 :: Int <- int1OrError
-  i2 :: Int <- int2OrError
-  Right (i1 + i2)
-
--- int1or2 == Left "nothing here"
-
-baz :: ()
-baz = ()
-
--- readIntegerFromCommandLine :: IO Int
-
--- toMonad :: Monad m => a -> m a
-
--- toMonad :: a -> Either Text a
--- toMonad a = Right a
-
--- toMonad :: a -> Maybe a
--- toMonad a = Just a
+circleciUrl :: [Char] -> [Char]
+circleciUrl token =
+  "https://circleci.com/gh/symbiont-io/workflows/assembly/tree/develop"
+    <> "?limit=1&circlecitoken=" <> token -- [&offset=...]&circlecitoken=..."
 
 main :: IO ()
 main = do
-  value <- putStrLn ("Hello" :: Text)
-  i <- foo
-  j :: Int <- pure (5 :: Int) :: IO Int
-  let k = 5
-  putStrLn (show (i + j + k) :: Text)
-  putStrLn (show value :: Text)
+  -- fetch circleci token from env var
+  maybeToken :: Maybe [Char] <- lookupEnv "CIRCLECI_API_TOKEN"
+  let
+    token = case maybeToken of
+      Nothing -> panic ("token missing" :: Text)
+      Just t -> t
 
--- myQuery :: DatabaseMonad Text
--- myQuery = do
---   let sql = "SELECT * FROM PEOPLE"
---   result <- executeQuery sql
---   pure ( show result :: Text )
+  let url = circleciUrl token
 
-  -- putStrLn ("Hello world" :: Text)
-  -- putStrLn ("Hello again" :: Text)
+  putStrLn ("hi" :: Text)
 
-  -- putStrLn (show (int1or2) :: Text)
-  -- _i <- foo
+  -- fetch json from circleci
+  request :: Request <- parseRequest url :: IO Request -- (MonadThrow m) => m Request
+  response :: Response BSL.ByteString <- httpLbs request :: IO (Response BSL.ByteString) -- MonadIO m => m (Response BSL.ByteString)
 
-foo :: IO Int
-foo = pure 5
-
-add :: Int -> Int -> Int
-add a b = a + b
-
--- bar a = ...
-
--- type Either a b = ...
-
--- foo :: (ToJSON a, Print a, Num a, ) => a -> ...
-
--- func myDrive (a Vehicle) {
---   return a.drive()
--- }
-
-
-
--- function carpark(v1 Vehicle, v2 Vehivle) -> Vehicle{
---   ...
--- }
-
--- firstCar :: (Vehicle v) => v -> v -> v
--- firstCar v1 v2 = v1
-
-
-
--- function add (a: Int, b: Int) -> Int{
---   return a + b
--- }
-
-
+  let bs = getResponseBody response :: BSL.ByteString
+  putStrLn bs
+  -- pretty print json
