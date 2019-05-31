@@ -6,6 +6,7 @@ dependencies:
   - atomic-write
   - base
   - aeson
+  - aeson-pretty
   - bytestring
   - directory
   - http-conduit
