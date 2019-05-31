@@ -9,8 +9,14 @@ import           Network.HTTP.Simple (parseRequest, httpLbs, Request, Response, 
 
 circleciUrl :: [Char] -> [Char]
 circleciUrl token =
-  "https://circleci.com/gh/symbiont-io/workflows/assembly/tree/develop"
-    <> "?limit=1&circlecitoken=" <> token -- [&offset=...]&circlecitoken=..."
+  let
+    user = "symbiont-io"
+    project = "symbiont-node"
+    branch = "develop"
+  in
+    -- You need to follow the symbiont-node project in circleci for this url to work
+    "https://circleci.com/api/v1.1/project/github/"<>user<>"/"<>project<>"/tree/"<>branch
+      <> "?circle-token=" <> token <> "&limit=100" -- &offset=
 
 main :: IO ()
 main = do
@@ -31,4 +37,5 @@ main = do
 
   let bs = getResponseBody response :: BSL.ByteString
   putStrLn bs
+
   -- pretty print json
