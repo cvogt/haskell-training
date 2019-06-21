@@ -2,13 +2,12 @@ module Circleci where
 
 import           Circleci.Types
 
-import           Data.Aeson                               (Value,
-                                                           eitherDecode)
+import           Data.Aeson                               (Value, eitherDecode)
 import           Data.Aeson.Encode.Pretty                 (encodePretty)
 import qualified Data.ByteString.Lazy                     as BSL
 import           Data.FileEmbed                           (makeRelativeToProject,
                                                            strToExp)
-import qualified Data.List                                as L
+import qualified Data.List.NonEmpty                       as NEL
 import           Network.HTTP.Simple
 import           Protolude
 import           System.AtomicWrite.Writer.LazyByteString (atomicWriteFile)
@@ -25,8 +24,8 @@ circleciUrl token =
     "https://circleci.com/api/v1.1/project/github/"<>user<>"/"<>project<>"/tree/"<>branch
       <> "?circle-token=" <> token <> "&limit=100" -- &offset=
 
-main :: IO ()
-main = do
+main :: [Char] -> IO ()
+main _repoDir = do
   -- fetch circleci token from env var
   maybeToken :: Maybe [Char] <- lookupEnv "CIRCLECI_API_TOKEN"
   let
@@ -62,11 +61,23 @@ main = do
       Left error  -> panic (toS error)
       Right value -> value
 
-    sameWorkflowId :: CircleciBuild -> CircleciBuild -> Bool
-    sameWorkflowId l r = workflow_id (workflows l) == workflow_id (workflows r)
+    groupedBuilds :: [NonEmpty CircleciBuild]
+    groupedBuilds = NEL.groupWith (workflow_id . workflows) builds
 
-    groupedBuilds :: [[CircleciBuild]]
-    groupedBuilds = L.groupBy sameWorkflowId builds
+  let
+    _ops :: [IO ()]
+    _ops = do
+      build <- groupedBuilds
+      pure $ putStrLn (show build :: Text)
 
+    showWorkflow jobs = do
+      let hash' = vcs_revision $ NEL.head jobs
+      putStrLn hash'
 
-  putStrLn $ (show (length groupedBuilds) :: Text)
+    ops' :: [IO ()]
+    ops' = map showWorkflow groupedBuilds
+
+    ops'' :: IO [()]
+    ops'' = sequence ops'
+
+  void ops''

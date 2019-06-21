@@ -8,6 +8,7 @@ data CircleciBuild =
     { status    :: Text
     , queued_at :: Text
     , workflows :: Workflow
+    , vcs_revision :: Text
     }
   deriving (Generic, FromJSON, Show)
 
