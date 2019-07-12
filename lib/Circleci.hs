@@ -1,8 +1,9 @@
 module Circleci where
 
 import           Circleci.Types
-
+import           System.Process
 import           Data.Aeson                               (Value, eitherDecode)
+import qualified Data.List                                as List
 import           Data.Aeson.Encode.Pretty                 (encodePretty)
 import qualified Data.ByteString.Lazy                     as BSL
 import           Data.FileEmbed                           (makeRelativeToProject,
@@ -13,19 +14,31 @@ import           Protolude
 import           System.AtomicWrite.Writer.LazyByteString (atomicWriteFile)
 import           System.Environment                       (lookupEnv)
 
-circleciUrl :: [Char] -> [Char]
-circleciUrl token =
+circleciUrl :: [Char] -> [Char] -> [Char]
+circleciUrl token branch =
   let
     user = "symbiont-io"
     project = "symbiont-node"
-    branch = "develop"
   in
     -- You need to follow the symbiont-node project in circleci for this url to work
     "https://circleci.com/api/v1.1/project/github/"<>user<>"/"<>project<>"/tree/"<>branch
       <> "?circle-token=" <> token <> "&limit=100" -- &offset=
 
 main :: [Char] -> IO ()
-main _repoDir = do
+main repoDir = do
+
+  let
+    record :: CreateProcess
+    record = proc "/usr/bin/git" ["branch"]
+    updatedRecord = record {cwd = Just repoDir}
+    
+  output <- readCreateProcess updatedRecord ""
+  let
+    lines :: [[Char]]
+    lines = List.lines output
+    filteredLines = List.filter (\text -> isPrefixOf "*" text) lines
+    branch = "develop"
+  putStrLn (show filteredLines :: Text)
   -- fetch circleci token from env var
   maybeToken :: Maybe [Char] <- lookupEnv "CIRCLECI_API_TOKEN"
   let
@@ -33,7 +46,7 @@ main _repoDir = do
       Nothing -> panic ("token missing" :: Text)
       Just t  -> t
 
-  let url = circleciUrl token
+  let url = circleciUrl token branch
 
   -- fetch json from circleci
   request :: Request <- parseRequest url :: IO Request -- (MonadThrow m) => m Request
